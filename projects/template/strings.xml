@@ -1,0 +1,5 @@
+<resources>
+   <string name="app_name">NAME</string>
+   <string name="arch">armv8</string>
+   <string name="arch2">aarch64</string>
+</resources>

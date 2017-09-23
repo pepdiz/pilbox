@@ -1,0 +1,223 @@
+22sep17abu
+(c) Software Lab. Alexander Burger
+
+
+         PilBox - Building Android Apps in PicoLisp
+         ==========================================
+
+PilBox ("PicoLisp Box") is a generic Android App which encapsulates normal
+PicoLisp (Web-) applications into installable APKs ("Android Packages").
+
+It starts a Java Activity with a WebView GUI component (essentially an embedded
+browser), and a Java Service which in turn calls an Arm64 PicoLisp binary.
+PicoLisp interfaces with the Java runtime on the device, and can utilize
+virtually any Java functionality provided by the Android runtime system.
+
+The source tarball can be downloaded from
+
+   https://software-lab.de/PilBox.tgz
+
+The installable APK of the generic PilBox is at
+
+   https://software-lab.de/pilBox.apk
+
+
+The PilBox source package contains a directory tree with:
+
+   - Android Studio SDK Manifest(s) and build files
+   - A set of Java files for the App runtime
+   - Some resources in XML and PNG files
+   - Build/compile shell scripts
+   - A "picoLisp/" directory
+   - An "openssl/" directory
+   - A "projects/" directory
+   - A "pils/" directory
+
+The "picoLisp/" and "openssl/" directories contain pre-built binaries for Arm64.
+
+"projects/" contains a "template/" directory (can be cloned for new projects),
+the "gen/" directory with the generic PilBox App, and a "pils/" directory with a
+few example Apps.
+
+
+      How to Build an App
+      -------------------
+
+There are three ways - with increasing difficulty - to build an App with PilBox:
+
+   1. Just pack a set of PicoLisp source files into a ZIP archive and send
+      ("share") it to the generic PilBox App.
+
+   2. Replace the generic PilBox App (i.e. the file "App.l") with your own
+      application, also by sending a ZIP archive.
+
+   3. Modify the PilBox kernel on the Java level. This requires an Android SDK.
+
+
+      Using the Generic PilBox App
+      ----------------------------
+
+The Generic PilBox App is a single file "App.l", which is started by the PilBox
+Java kernel.
+
+Initially, it displays an empty screen with just two icons, a PicoLisp logo on
+the top-left which opens a PicoLisp REPL (a simple terminal window with a
+read-eval-print loop), and a settings icon on the top-right which opens a
+default settings page.
+
+It scans all directories and looks for files named "App.l" on the top level. The
+first expression (typically a string) is 'read' and used as a name, the rest
+should implement the desired functionality. In addition it scans for "loc/"
+(locale) directories, and files named "lib.css" and "logo.png". If such files
+are found, they are used automatically.
+
+All found Apps are displayed on the start page as buttons. If only a single
+"App.l" was found, however, this App is started immediately.
+
+Writing a new App for PilBox is very simple. For a minimal example, look at the
+Hello World App in the PilBox/pils/hello/ directory. It contains a single file
+"App.l":
+
+   # "Hello World"
+
+   (menu "Hello World!"
+      (<h1> "center blue" "Hello World!") )
+
+To try it, download the PilBox APK from https://software-lab.de/pilBox.apk and
+install it on your Android device. Enable "Memory access" in your permissions
+(and "Location" if GPS access is necessary).
+
+Make a ZIP archive from the "hello/" directory
+
+   $ cd PilBox/
+   $ zip -r hello.zip hello/
+
+and either download it to your device and click on it, or store it in some
+public directory and pass it to the App. I use the "storage/" directory in
+Termux and call
+
+   $ termux-share ~/storage/downloads/hello.zip
+
+The PilBox App will start, unpack the ZIP, and (as it is the first and only App
+so far), display "Hello World!".
+
+For a more interesting experience, a calculator App is provided. After executing
+
+   $ zip -r calc.zip calc/
+
+and installing the resulting ZIP archive in the same way, PilBox will now
+display two Apps, "Hello World" and "Calculator". By clicking on the
+"Calculator" button, a nice bignum calculator will show up.
+
+The included "demo/" is a bit silly, just a collection of components, plus some
+access to the camera, QR-code scanner, notifications and GPS. You can install it
+the same way as the two other examples above.
+
+
+      Building the PilBox Kernel
+      --------------------------
+
+For the following, we assume that you changed to the "PilBox/" directory:
+
+   $ cd PilBox/
+
+
+      Toolchain
+      ---------
+
+First the toolchain must be prepared. Assuming that the Android Studio SDK is
+relative to the "PilBox/" directory in "../Sdk/", execute:
+
+   $../Sdk/ndk-bundle/build/tools/make_standalone_toolchain.py \
+      --api 21 \
+      --arch arm64 \
+      --install-dir toolchain/
+
+
+      Build PicoLisp for Arm64
+      ------------------------
+
+Then execute the following steps to get the PicoLisp environment from the
+rolling PicoLisp release:
+
+   $ wget https://software-lab.de/picoLisp.tgz
+   $ tar xfz picoLisp.tgz
+   $ ./mk.arm64.linux
+
+This builds the "bin/picolisp" binary, and the "lib/ext" and "lib/ht" shared
+library files under "picoLisp/".
+
+
+      OpenSSL
+      -------
+
+If you want to use "bin/ssl" for HTTPS communication, you need to build openssl
+for Android (see http://wiki.openssl.org/index.php/Android):
+
+   $ wget https://www.openssl.org/source/openssl-1.0.2k.tar.gz
+   $ tar xfz openssl-1.0.2k.tar.gz
+   $ ln -s openssl-1.0.2k openssl
+   $ ./mk.openssl
+   $ ./mk.ssl
+
+
+      PilBox Projects
+      ---------------
+
+To switch the build process easily between different applications, PilBox uses
+an elaborate system of symbolic links.
+
+By redirecting the single symbolic link '@'
+
+   projects/@ -> gen/
+
+the whole build environment, including the application-specific AndroidManifest,
+resource files and PicoLisp code, can be redefined.
+
+Each project should have a "run/" directory, which ends up as the home directory
+of the App at runtime. It should contain a file "App.l" which is called by the
+Android Service as the Lisp entry point:
+
+   new ProcessBuilder("bin/picolisp", "lib.l", "App.l")
+
+This "App.l" file in turn can 'load' arbitrary PicoLisp sources and proceed with
+whatever it is supposed to do.
+
+To build the generic PilBox, execute
+
+   $ ./mk.pilBox
+
+If everything works, it produces the file "pilBox.apk". You can install it on
+your device if you connect it via USB (after enabling the proper debugging
+options, this is beyond this description), and install it via
+
+   $ ../Sdk/platform-tools/adb install -r pilBox.apk
+
+
+      Your own PilBox Project
+      -----------------------
+
+To build your own project, start with a copy of the template:
+
+   $ cp -a projects/template/ projects/newProject/
+
+You may want to replace the default PicoLisp icons in
+
+      projects/newProject/img/
+
+with your own, project-specific ones. Then put your Lisp files into
+
+      projects/newProject/run/
+
+and set the '@' link to your project
+
+   $ cd projects
+   $ rm @
+   $ ln -s newProject @
+
+then build the APK with
+
+   $ ./gradlew assembleRelease
+   $ mv app/build/outputs/apk/app-release.apk newProject.apk
+
+Or, for convenience, put these steps into a shell script analog to "mk.pilBox".

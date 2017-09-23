@@ -1,0 +1,24 @@
+# 03feb17abu
+# (c) Software Lab. Alexander Burger
+
+cd picoLisp/src64/
+
+ASM=../../toolchain/bin/aarch64-linux-android-as
+LINK=../../toolchain/bin/aarch64-linux-android-clang
+STRIP=../../toolchain/bin/aarch64-linux-android-strip
+
+./mkAsm arm64 .linux .s Linux base "" map version.l glob.l main.l gc.l apply.l flow.l sym.l subr.l big.l io.l db.l net.l err.l sys/arm64.linux.code.l
+./mkAsm arm64 .linux .s Linux ext T "" ext.l
+./mkAsm arm64 .linux .s Linux ht T "" ht.l
+
+$ASM -o base.o  arm64.linux.base.s
+$ASM -o ext.o  arm64.linux.ext.s
+$ASM -o ht.o  arm64.linux.ht.s
+
+$LINK -pie -o ../bin/picolisp  -rdynamic  base.o  -lc -lm -ldl
+$LINK -o ../lib/ext  -shared  ext.o
+$LINK -o ../lib/ht  -shared  ht.o
+
+$STRIP ../bin/picolisp ../lib/ext ../lib/ht
+
+rm base.o ext.o ht.o

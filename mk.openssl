@@ -1,0 +1,11 @@
+# 02feb17abu
+# (c) Software Lab. Alexander Burger
+
+cd openssl/
+
+ANDROID_NDK_ROOT=$(readlink -f ../../Sdk/ndk-bundle)
+. ../setenv-openssh.sh
+
+./config shared no-ssl2 no-ssl3 no-comp no-hw no-engine
+
+make depend all

@@ -1,0 +1,25 @@
+/* 29aug17abu
+ * (c) Software Lab. Alexander Burger
+ */
+
+body {
+   font-size: 3.0vw;
+   background-color: cyan;
+}
+
+input[type='text'] {
+   width: 100%;
+   font-size: larger;
+}
+
+.grid {
+   width: 100%;
+   text-align: center;
+}
+
+.calc .submit {
+   width: 12vw;
+   height: 8vw;
+   font-size: larger;
+   margin: 1ex 0;
+}

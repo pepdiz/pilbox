@@ -1,0 +1,22 @@
+# 31jan17abu
+# (c) Software Lab. Alexander Burger
+
+cd picoLisp/src/
+
+API=android-21
+NDK=../../../Sdk/ndk-bundle
+CHAIN=toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin
+GCC=arm-linux-androideabi-gcc
+SYS=$NDK/platforms/$API/arch-arm/
+STRIP=arm-linux-androideabi-strip
+
+SSL=../../openssl
+
+$NDK/$CHAIN/$GCC --sysroot=$SYS -pie \
+   -o ../bin/ssl \
+   -I $SSL/include \
+   ssl.c \
+   -L $SSL \
+   -lssl -lcrypto
+
+$NDK/$CHAIN/$STRIP ../bin/ssl

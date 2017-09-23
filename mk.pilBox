@@ -1,0 +1,5 @@
+# 23aug17abu
+# (c) Software Lab. Alexander Burger
+
+(cd projects; rm @; ln -s gen @)
+./gradlew assembleRelease  &&  mv app/build/outputs/apk/app-release.apk pilBox.apk
